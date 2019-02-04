@@ -371,10 +371,9 @@ adf.test(resi,alternative = "stationary")
 kpss.test(resi)
 #KPSS Level = 0.041582, Truncation lag parameter = 3, p-value = 0.1
 #Since p-value for KPSS test is greater than threshold 0.05 it is stationary
-
-
-
-#------------------------- Model Evaluation EU & Consumer Sales-----------------------------------------------------------------
+```
+#### Model Evaluation EU & Consumer Sales
+```R
 #Now, let's evaluate the model using MAPE
 #First, let's make a prediction for the last 6 months
 
@@ -385,8 +384,6 @@ outdata <- gs_Con_EU_Sales_Month[43:48,]
 timevals_out <-  data.frame(Month = outdata$Year.Month)
 fcast_arima <- predict(lmfit, timevals_out)
 print(fcast_arima)
-#       1        2        3        4        5        6 
-#38307.50 43253.87 48966.26 54626.88 59377.50 62494.59
 
 #MAPE (mean absolute percentage error) for finding out the error in evaluating our model
 MAPE_arima <- accuracy(fcast_arima, outdata$Sales)[5]
@@ -414,6 +411,7 @@ class_dec_pred <- c(ts(global_pred),ts(global_pred_out))
 plot(total_timeser, col = "black" ,main="Forecasting Consumer-EU Sales by Classical Decomposition",xlab="Month",ylab="Sales")
 lines(class_dec_pred, col = "red")
 abline(v = 42, col="blue", lwd=2, lty=2)
+rect(c(48,0), -1e6, c(54,0), 1e6, col = rgb(0.5,0.5,0.5,1/3), border=NA)
 
 legend("topleft", legend = c("Original","Forecasted"),
        text.width = strwidth("1,000,0000000"),
@@ -422,6 +420,6 @@ legend("topleft", legend = c("Original","Forecasted"),
        title = "Line Types")
 ```
 
-
+# To be continued
 
 
