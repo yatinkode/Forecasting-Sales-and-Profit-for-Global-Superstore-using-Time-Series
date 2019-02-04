@@ -45,8 +45,9 @@ sum(is.na(gs$Segment)) #No NA values in Segment
 prop.table(table(gs$Segment))*100
 ```
 | __Consumer__ | __Corporate__ | __Home Office__ |
-|--------------|---------------------------------|
+|--------------|---------------|-----------------|
 | 51.70209     |  30.08189     | 18.21603        |
+
 
 ```R
 sum(is.na(gs$Market)) #No NA values in Market
@@ -55,6 +56,7 @@ prop.table(table(gs$Market))*100
 | __Africa__ | __APAC__   | __Canada__ | __EMEA__ |__EU__    |__LATAM__  |__US__     |
 |------------|------------|------------|----------|----------|-----------|-----------|
 | 8.943264   |  21.450575 | 0.748684   | 9.805030 |19.496978 | 20.070189 | 19.485280 |
+
 
 ```R
 prop.table(table(gs$Market,gs$Segment))*100
@@ -69,6 +71,7 @@ prop.table(table(gs$Market,gs$Segment))*100
 | __EU__       |  10.1111328  | 5.9992201     |  3.3866251      |
 | __LATAM__    |  10.3743420  | 5.9524274     |  3.7434198      |
 | __US__       |  10.1208813  | 5.8880873     |  3.4763112      |
+
 
 ```R
 #Plotting Profit Based on Market-Segment
