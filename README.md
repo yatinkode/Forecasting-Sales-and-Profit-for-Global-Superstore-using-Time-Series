@@ -43,26 +43,33 @@ sum(is.na(gs$Order.Date)) #All rows are converted to date
 
 sum(is.na(gs$Segment)) #No NA values in Segment
 prop.table(table(gs$Segment))*100
-#Consumer   Corporate Home Office 
-#51.70209    30.08189    18.21603
+```
+| __Consumer__ | __Corporate__ | __Home Office__ |
+|--------------|---------------------------------|
+| 51.70209     |  30.08189     | 18.21603        |
 
+```R
 sum(is.na(gs$Market)) #No NA values in Market
 prop.table(table(gs$Market))*100
-#Africa      APAC    Canada      EMEA        EU     LATAM        US 
-#8.943264 21.450575  0.748684  9.805030 19.496978 20.070189 19.485280 
+```
+| __Africa__ | __APAC__   | __Canada__ | __EMEA__ |__EU__    |__LATAM__  |__US__     |
+|------------|------------|------------|----------|----------|-----------|-----------|
+| 8.943264   |  21.450575 | 0.748684   | 9.805030 |19.496978 | 20.070189 | 19.485280 |
 
+```R
 prop.table(table(gs$Market,gs$Segment))*100
-#          Consumer  Corporate Home Office
-#Africa  4.6422305  2.5580035   1.7430298
-#APAC   11.1113277  6.4008579   3.9383895
-#Canada  0.3938390  0.2144668   0.1403782
-#EMEA    4.9483330  3.0688243   1.7878729
-#EU     10.1111328  5.9992201   3.3866251
-#LATAM  10.3743420  5.9524274   3.7434198
-#US     10.1208813  5.8880873   3.4763112
+```
+|              | __Consumer__ | __Corporate__ | __Home Office__ |
+|--------------|------------------------------|-----------------|
+| __Africa__   |  4.6422305   | 2.5580035     |  1.7430298      |
+| __APAC__     |  11.1113277  | 6.4008579     |  3.9383895      |
+| __Canada__   |  0.3938390   | 0.2144668     |  0.1403782      |
+| __EMEA__     |  4.9483330   | 3.0688243     |  1.7878729      |
+| __EU__       |  10.1111328  | 5.9992201     |  3.3866251      |
+| __LATAM__    |  10.3743420  | 5.9524274     |  3.7434198      |
+| __US__       |  10.1208813  | 5.8880873     |  3.4763112      |
 
-
-
+```R
 #Plotting Profit Based on Market-Segment
 ggplot(gs,aes(x=Market,y=Profit,fill=Segment)) +
   theme_forecast() + 
