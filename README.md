@@ -59,6 +59,7 @@ prop.table(table(gs$Market))*100
 ```R
 prop.table(table(gs$Market,gs$Segment))*100
 ```
+
 |              | __Consumer__ | __Corporate__ | __Home Office__ |
 |--------------|------------------------------|-----------------|
 | __Africa__   |  4.6422305   | 2.5580035     |  1.7430298      |
