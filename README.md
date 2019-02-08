@@ -419,7 +419,7 @@ legend("topleft", legend = c("Original","Forecasted"),
        col = c("black","red"),
        title = "Line Types")
 ```
-
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/forecastclassicaleuconsales.png)
 # To be continued
 
 
