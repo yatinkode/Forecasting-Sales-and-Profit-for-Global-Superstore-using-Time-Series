@@ -726,3 +726,173 @@ legend("topleft", legend = c("Original","Predicted","Forecasted band"),
        title = "Line Types")
 ```       
 ![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/autoarimaforecasteuconquan.png)
+
+### Time Series Modelling for Sales of APAC-Consumer Category
+```R
+
+str(gs_Con_APAC_Sales_Month)
+
+nrow(gs_Con_APAC_Sales_Month)
+
+#Let's create the model using the first 42 rows.
+#Then we can test the model on the remaining 6 rows later
+```
+#### Classical Decomposition Method to Forecast Time series Consumer and APAC on Sales
+```R
+gs_Con_APAC_Sales_Month$Year.Month <- seq(1,48)
+
+total_timeser <- ts(gs_Con_APAC_Sales_Month$Sales)
+indata <- gs_Con_APAC_Sales_Month[1:42,]
+
+timeser <- ts(indata$Sales)
+plot(timeser,main="Plot for Timeseries of APAC-Consumer Sales",xlab="Month",ylab="Sales")
+
+
+#--------------------------------------- Smoothing the series - Moving Average Smoothing ----------------------------------------------
+
+w <-1
+smoothedseries <- stats::filter(timeser,filter=rep(1/(2*w+1),(2*w+1)), method='convolution', sides=2)
+
+#Smoothing left end of the time series
+
+diff <- smoothedseries[w+2] - smoothedseries[w+1]
+for (i in seq(w,1,-1)) {
+  smoothedseries[i] <- smoothedseries[i+1] - diff
+}
+
+#Smoothing right end of the time series
+
+n <- length(timeser)
+diff <- smoothedseries[n-w] - smoothedseries[n-w-1]
+for (i in seq(n-w+1, n)) {
+  smoothedseries[i] <- smoothedseries[i-1] + diff
+}
+
+#Plot the smoothed time series
+
+lines(smoothedseries, col="red", lwd=2)
+
+#Building a model on the smoothed time series using classical decomposition
+#First, let's convert the time series to a dataframe
+
+timevals_in <- indata$Year.Month
+smootheddf <- as.data.frame(cbind(timevals_in, as.vector(smoothedseries)))
+colnames(smootheddf) <- c('Month', 'Sales')
+
+#Now, let's fit a Multplicative model with trend and seasonality to the data
+#Seasonality will be modeled using a sinusoid function
+
+#Since multplicative model fits the smoothehned series more appropriately than additive model we will choose multiplicative model
+#Formula obtained after multiple trial and errors
+lmformula<-as.formula(Sales ~ sin(Month * 0.91) * poly(Month, 3) + cos(Month * 0.55) * poly(Month, 3)	)
+
+lmfit <- lm(lmformula, data = smootheddf)
+
+
+global_pred <- predict(lmfit, Month=timevals_in)
+summary(global_pred)
+#Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#16340   26168   35227   34503   42107   51754 
+
+#Drawing the global prediction
+lines(timevals_in, global_pred, col='blue', lwd=2)
+
+legend("topleft", legend = c("Original","Smooth Series", "Regression Line"),
+       text.width = strwidth("1,000,00000000"),
+       lty = 1, xjust = 1, yjust = 1,
+       col = c("black","red","blue"),
+       title = "Line Types")
+```
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/classicalconapacsalespred.png)
+
+```R
+#Now, let's look at the locally predictable series. We will remove the trend and seasonality from the series and get local series
+#We will model it as an ARMA series
+
+local_pred <- timeser-global_pred
+plot(local_pred, col='red', type = "l",main="Local series of APAC Consumer Sales",xlab="Month",ylab="Value")  # We have found out the local series
+```
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/localclassicalconapacsales.png)
+
+```R
+#ACF test
+acf(local_pred,main="ACF plot for local series in Consumer APAC Sales")     #Lots of points are above cutoff value. It means pairwise relationships are preserved
+
+#PACF test
+pacf(local_pred,main="PACF plot for local series in Consumer APAC Sales")    #Here also many point exceed the cutoff value
+```
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/acfpacflocalconapacsales.png)
+
+```R
+print(adf.test(local_pred,alternative = "stationary"))   #p-value = 0.048 Series is stationary since p-value below 0.05 in ADF test
+
+print(kpss.test(local_pred))                              #p-value = 0.1 Series is stationary since p-value above 0.05 in KPSS test
+
+#Lets see if the stationary series is weak or strong
+armafit <- auto.arima(local_pred)
+armafit                              #ARIMA(0,0,0) with zero mean 
+
+#Now we will get the residual
+resi<-local_pred-fitted(armafit)
+
+acf(resi,main="ACF plot for residual series in Consumer APAC Sales")      #Almost all points are below cutoff value in ACF
+pacf(resi,main="PACF plot for residual series in Consumer APAC Sales")    #Almost all points are below cutoff value in PACF
+
+#Now we check whether the residual is white noise
+
+adf.test(resi,alternative = "stationary")
+#Dickey-Fuller = -3.5528, Lag order = 3, p-value = 0.04868
+#alternative hypothesis: stationary
+#Since p-value for Augmented Dickey-Fuller Test is less than threshold 0.05 it is stationary
+
+kpss.test(resi)
+#KPSS Level = 0.03881, Truncation lag parameter = 1, p-value = 0.1
+#Since p-value for KPSS test is greater than threshold 0.05 it is stationary
+
+#------------------------- Model Evaluation APAC & Consumer Sales------------------------------
+
+#Now, let's evaluate the model using MAPE
+#First, let's make a prediction for the last 6 months
+
+outdata <- gs_Con_APAC_Sales_Month[43:48,]
+
+timevals_out <-  data.frame(Month = outdata$Year.Month)
+fcast_arima <- predict(lmfit, timevals_out)
+print(fcast_arima)
+
+#MAPE (mean absolute percentage error) for finding out the error in evaluating our model
+MAPE_arima <- accuracy(fcast_arima, outdata$Sales)[5]
+
+global_pred_out <- predict(lmfit,data.frame(Month =timevals_out))
+
+fcast <- global_pred_out
+
+#Now, let's compare our prediction with the actual values, using MAPE
+
+MAPE_class_dec <- accuracy(fcast,outdata$Sales)[5]
+MAPE_class_dec                                       #14.54365
+
+#The error is very less so our model is good to go
+Futurepred <- predict(lmfit,data.frame(Month=seq(1:54)))
+Futurepred[49:54]
+```
+| __Jan 15__ | __Feb 15__| __Mar 15__ | __Apr 15__|__May 15__|__Jun 15__|
+|------------|-----------|------------|-----------|----------|----------|
+| 30666.07   |  12184.69 | 20412.62   | 54671.81  |90930.44  | 97903.62 |
+
+```R
+#Let's also plot the predictions along with original values, to
+#get a visual feel of the fit
+
+class_dec_pred <- c(ts(global_pred),ts(global_pred_out),ts(Futurepred))
+plot(total_timeser, col = "black" ,main="Forecasting for Consumer-APAC Sales using Classical Decomposition",xlab="Month",ylab="Sales")
+lines(class_dec_pred, col = "red")
+abline(v = 42, col="blue", lwd=2, lty=2)
+rect(c(48,0), -1e6, c(54,0), 1e6, col = rgb(0.5,0.5,0.5,1/3), border=NA)
+legend("topleft", legend = c("Original","Predicted","Forecasted band"),
+       text.width = strwidth("1,000,000000000"),
+       lty = 1, xjust = 1, yjust = 1,
+       col = c("black","red","grey"),
+       title = "Line Types")
+```
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/classicalforecastconapacsales.png)
