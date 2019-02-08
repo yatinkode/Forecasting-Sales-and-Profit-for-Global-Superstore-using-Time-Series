@@ -486,3 +486,81 @@ legend("topleft", legend = c("Original","Predicted","Forecasted band"),
        title = "Line Types")
 ```
  ![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/autoarimaforecasteuconsales.png)
+
+### Time Series Modelling for Demand(Quantity) of EU-Consumer Category
+```R
+tr(gs_Con_EU_Quantity_Month)
+
+nrow(gs_Con_EU_Quantity_Month)
+
+#Let's create the model using the first 42 rows.
+#Then we can test the model on the remaining 6 rows later
+```
+#### Classical Decomposition Method to Forecast Time series Consumer and EU on Quantity (Demand)
+```R
+gs_Con_EU_Quantity_Month$Year.Month <- seq(1,48)
+
+total_timeser <- ts(gs_Con_EU_Quantity_Month$Quantity)
+indata <- gs_Con_EU_Quantity_Month[1:42,]
+
+timeser <- ts(indata$Quantity)
+plot(timeser,main="Plot for Timeseries of EU-Consumer Quantity",xlab="Month",ylab="Quantity")
+
+#Smoothing the series
+w <-1
+smoothedseries <- stats::filter(timeser,filter=rep(1/(2*w+1),(2*w+1)), method='convolution', sides=2)
+
+#Smoothing left end of the time series
+
+diff <- smoothedseries[w+2] - smoothedseries[w+1]
+for (i in seq(w,1,-1)) {
+  smoothedseries[i] <- smoothedseries[i+1] - diff
+}
+
+#Smoothing right end of the time series
+
+n <- length(timeser)
+diff <- smoothedseries[n-w] - smoothedseries[n-w-1]
+for (i in seq(n-w+1, n)) {
+  smoothedseries[i] <- smoothedseries[i-1] + diff
+}
+
+#Plot the smoothed time series
+
+lines(smoothedseries, col="red", lwd=2)
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------
+
+#Building a model on the smoothed time series using classical decomposition
+#First, let's convert the time series to a dataframe
+
+timevals_in <- indata$Year.Month
+smootheddf <- as.data.frame(cbind(timevals_in, as.vector(smoothedseries)))
+colnames(smootheddf) <- c('Month', 'Quantity')
+
+#Now, let's fit a Multplicative model with trend and seasonality to the data
+#Seasonality will be modeled using a sinusoid function
+
+#Since multplicative model fits the smoothehned series more appropriately than additive model we will choose multiplicative model
+#Formula obtained after multiple trial and error
+lmformula<-as.formula(Quantity ~ cos(Month * 0.19) * poly(Month, 3))
+
+lmfit <- lm(lmformula, data = smootheddf)
+
+
+global_pred <- predict(lmfit, Month=timevals_in)
+summary(global_pred)
+#Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#92.91  309.05  392.76  364.64  438.54  461.70 
+
+#Drawing the global prediction
+lines(timevals_in, global_pred, col='blue', lwd=2)
+
+legend("topleft", legend = c("Original","Smooth Series", "Regression Line"),
+       text.width = strwidth("1,000,00000000"),
+       lty = 1, xjust = 1, yjust = 1,
+       col = c("black","red","blue"),
+       title = "Line Types")
+
+#Now, let's look at the locally predictable series. We will remove the trend and seasonality from the series and get local series
+#We will model it as an ARMA series
