@@ -444,7 +444,7 @@ legend("bottomright", legend = c("Original","Forecasted"),
 ```R
 tsdiag(autoarima)               #Plotting diagnostics of time series
 ```
- ![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/autoarimaeuconsales.png)
+ ![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/tsdiagautoarimaeuconsales.png)
  
 ```R
 #Again, let's check if the residual series is white noise
@@ -529,8 +529,6 @@ for (i in seq(n-w+1, n)) {
 
 lines(smoothedseries, col="red", lwd=2)
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------
-
 #Building a model on the smoothed time series using classical decomposition
 #First, let's convert the time series to a dataframe
 
@@ -561,6 +559,108 @@ legend("topleft", legend = c("Original","Smooth Series", "Regression Line"),
        lty = 1, xjust = 1, yjust = 1,
        col = c("black","red","blue"),
        title = "Line Types")
+```
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/classicalpredeuconquan.png)
 
+```R
 #Now, let's look at the locally predictable series. We will remove the trend and seasonality from the series and get local series
 #We will model it as an ARMA series
+
+local_pred <- timeser-global_pred
+plot(local_pred, col='red', type = "l",main="Local series of EU-Consumer-Quantity",xlab="Month",ylab="Quantity")  # We have found out the local series
+
+#Lets verify whether local series is white noise or not
+
+#ACF test
+acf(local_pred,main="ACF for Local series of Consumer-EU Quantity")     #Lots of points are above cutoff value. It means pairwise relationships are preserved
+
+#PACF test
+pacf(local_pred,main="PACF for Local series of Consumer-EU Quantity")    #Here also many point exceed the cutoff value
+```
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/acfpacflocaleuconquantityclassical.png)
+
+```R
+print(adf.test(local_pred,alternative = "stationary"))   #p-value = 0.01 Series is stationary since p-value below 0.05 in ADF test
+
+print(kpss.test(local_pred))                              #p-value = 0.1 Series is stationary since p-value above 0.05 in KPSS test
+
+#Lets see if the stationary series is weak or strong
+armafit <- auto.arima(local_pred)
+armafit                              #ARIMA(0,0,0) with zero mean 
+
+tsdiag(armafit)
+```
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/tsdiagclassicaleuconquan.png)
+
+```R
+#Now we will get the residual
+resi<-local_pred-fitted(armafit)
+
+acf(resi,main="ACF plot for residual series in Consumer EU Quantity")      #Almost all points are below cutoff value in ACF
+pacf(resi,main="PACF plot for residual series in Consumer EU Quantity")    #Almost all points are below cutoff value in PACF
+
+#Now we check whether the residual is white noise
+
+adf.test(resi,alternative = "stationary")
+#Dickey-Fuller = -3.4464, Lag order = 3, p-value = 0.0634
+#alternative hypothesis: stationary
+#Since p-value for Augmented Dickey-Fuller Test is less than threshold 0.05 it is stationary
+
+kpss.test(resi)
+#KPSS Level = 0.030276, Truncation lag parameter = 1, p-value = 0.1
+#Since p-value for KPSS test is greater than threshold 0.05 it is stationary
+
+
+#------------------------- Model Evaluation EU & Consumer Quantity (Demand)------------------------------
+#Now, let's evaluate the model using MAPE
+#First, let's make a prediction for the last 6 months
+
+outdata <- gs_Con_EU_Quantity_Month[43:48,]
+#timevals_out <- outdata$Year.Month
+
+
+timevals_out <-  data.frame(Month = outdata$Year.Month)
+fcast_arima <- predict(lmfit, timevals_out)
+print(fcast_arima)
+
+#MAPE (mean absolute percentage error) for finding out the error in evaluating our model
+MAPE_arima <- accuracy(fcast_arima, outdata$Quantity)[5]
+
+global_pred_out <- predict(lmfit,data.frame(Month =timevals_out))
+
+fcast <- global_pred_out
+
+#Now, let's compare our prediction with the actual values, using MAPE
+
+MAPE_class_dec <- accuracy(fcast,outdata$Quantity)[5]
+MAPE_class_dec                                       #21.21171
+
+#The error is very less so our model is good to go
+
+Futurepred <- predict(lmfit,data.frame(Month=seq(1:54)))
+Futurepred[49:54]
+```
+
+| __Jan 15__ | __Feb 15__| __Mar 15__ | __Apr 15__|__May 15__|__Jun 15__|
+|------------|-----------|------------|-----------|----------|----------|
+| 1068.642   |  1257.814 | 1475.313   | 1720.022  |1990.055  | 2282.888 |
+
+```R
+#Let's also plot the predictions along with original values, to
+#get a visual feel of the fit
+
+class_dec_pred <- c(ts(global_pred),ts(global_pred_out))
+
+class_dec_pred <- c(ts(global_pred),ts(global_pred_out))
+plot(total_timeser, col = "black" ,main="Forecasting Consumer-EU Quantity by Classical Decomposition",xlab="Month",ylab="Sales")
+lines(class_dec_pred, col = "red")
+abline(v = 42, col="blue", lwd=2, lty=2)
+rect(c(48,0), -1e6, c(54,0), 1e6, col = rgb(0.5,0.5,0.5,1/3), border=NA)
+
+legend("topleft", legend = c("Original","Forecasted"),
+       text.width = strwidth("1,000,0000000"),
+       lty = 1, xjust = 1, yjust = 1,
+       col = c("black","red"),
+       title = "Line Types")
+```
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/classicalforecasteuquan.png)
