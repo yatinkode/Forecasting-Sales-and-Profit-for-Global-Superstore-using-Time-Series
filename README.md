@@ -404,9 +404,12 @@ MAPE_class_dec                                       #20.16214
 
 Futurepred <- predict(lmfit,data.frame(Month=seq(1:54)))
 Futurepred[49:54]
-#49       50       51       52       53       54 
-#63549.62 62520.53 59828.40 56285.73 52959.78 50971.18 
+```
+| __Jan 15__ | __Feb 15__| __Mar 15__ | __Apr 15__|__May 15__|__Jun 15__|
+|------------|-----------|------------|-----------|----------|----------|
+| 63549.62   |  62520.53 | 59828.40   | 56285.73  |52959.78  | 50971.18 |
 
+```R
 class_dec_pred <- c(ts(global_pred),ts(global_pred_out))
 plot(total_timeser, col = "black" ,main="Forecasting Consumer-EU Sales by Classical Decomposition",xlab="Month",ylab="Sales")
 lines(class_dec_pred, col = "red")
@@ -420,6 +423,66 @@ legend("topleft", legend = c("Original","Forecasted"),
        title = "Line Types")
 ```
 ![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/forecastclassicaleuconsales.png)
-# To be continued
 
+#### Auto ARIMA Method to Forecast Time series Consumer- EU (Sales)
 
+```R
+autoarima <- auto.arima(timeser)
+autoarima                        #ARIMA(2,1,0)
+#ARIMA method predicts that the series is of AR(2) and needed 1 level of differencing
+
+plot(autoarima$x, col="black",main="Plotting for Consumer-EU Sales using Auto-ARIMA",xlab="Month",ylab="Sales")
+lines(fitted(autoarima), col="red")
+legend("bottomright", legend = c("Original","Forecasted"),
+       text.width = strwidth("1,000,000000"),
+       lty = 1, xjust = 1, yjust = 1,
+       col = c("black","red"),
+       title = "Line Types")
+ ```
+ ![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/autoarimaeuconsales.png)
+
+```R
+tsdiag(autoarima)               #Plotting diagnostics of time series
+```
+ ![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/autoarimaeuconsales.png)
+ 
+```R
+#Again, let's check if the residual series is white noise
+
+resi_auto_arima <- timeser - fitted(autoarima)
+
+adf.test(resi_auto_arima,alternative = "stationary")
+#Dickey-Fuller = -4.3522, Lag order = 3, p-value = 0.01
+#Hence residual is Stationary or white noise since p-value of ADF test is less than 0.05
+
+kpss.test(resi_auto_arima)
+#KPSS Level = 0.05314, Truncation lag parameter = 3, p-value = 0.1
+#Hence residual is white noise since p-value of KPSS test greater tha 0.05
+
+#Also, let's evaluate the model using MAPE and forecast the future values
+fcast_auto_arima <- predict(autoarima, n.ahead = 12)
+fcast_auto_arima$pred[7:12]
+```
+| __Jan 15__ | __Feb 15__| __Mar 15__ | __Apr 15__|__May 15__|__Jun 15__|
+|------------|-----------|------------|-----------|----------|----------|
+| 40288.07   |  39651.62 | 40168.29   | 40181.05  |39920.18  | 40065.12 |
+
+```R
+MAPE_auto_arima <- accuracy(fcast_auto_arima$pred,outdata$Sales)[5]
+MAPE_auto_arima               #28.9226
+#MAPE value obtained is pretty good in Auto ARIMA test
+
+#Lastly, let's plot the predictions along with original values, to
+#get a visual feel of the fit
+auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
+plot(total_timeser, col = "black",main="Forecasting Sales for Consumer-EU using Auto-ARIMA",xlab="Month",ylab="Sales")
+lines(auto_arima_pred, col = "red")
+abline(v = 42, col="blue", lwd=2, lty=2)
+rect(c(48,0), -1e6, c(54,0), 1e6, col = rgb(0.5,0.5,0.5,1/3), border=NA)
+legend("topleft", legend = c("Original","Predicted","Forecasted band"),
+       text.width = strwidth("1,000,000000000"),
+       lty = 1, xjust = 1, yjust = 1,
+       col = c("black","red","grey"),
+       title = "Line Types")
+```
+ ![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/autoarimaforecasteuconsales.png)
