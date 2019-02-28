@@ -1131,4 +1131,4 @@ legend("topleft", legend = c("Original","Predicted","Forecasted band"),
        col = c("black","red","grey"),
        title = "Line Types")
 ```
-![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/forecastautoarimaconapacdemand.png)
+![data](https://github.com/yatinkode/Forecasting-Sales-and-Profit-for-Global-Superstore-using-Time-Series/blob/master/images/forecastautoarimaconapacdemand.png) 
